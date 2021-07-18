@@ -12,7 +12,7 @@ export default class Card {
     this.side = this.frontCard;
     return this;
   }
-
+  // @TODO should call it render instead
   add() {
     this.gameObject = this.scene.add
       .sprite(250, 200 + this.index * 20, this.frontCard)
@@ -25,13 +25,43 @@ export default class Card {
   }
 
   flip() {
-    if (this.side === this.frontCard) {
-      this.gameObject.setTexture(this.sprite);
+    const timeline = this.scene.tweens.timeline({
+      onComplete: () => {
+        timeline.destroy();
+      },
+    });
 
-      this.side = this.sprite;
-      return;
-    }
+    timeline.add({ targets: this.gameObject, scale: 0.55, duration: 300 });
+    timeline.add({
+      targets: this.gameObject,
+      scaleX: 0,
+      duration: 300,
+      delay: 200,
+      onComlete: () => {
+        if (this.side === this.frontCard) {
+          this.gameObject.setTexture(this.sprite);
+          this.side = this.sprite;
 
-    this.gameObject.setTexture(this.frontCard);
+          return;
+        }
+
+        this.gameObject.setTexture(this.frontCard);
+        this.side = this.frontCard;
+      },
+    });
+
+    timeline.add({
+      targets: this.gameObject,
+      scaleX: 0.55,
+      duration: 300,
+    });
+
+    timeline.add({
+      targets: this.gameObject,
+      scaleX: 0.5,
+      duration: 300,
+    });
+
+    timeline.play();
   }
 }
