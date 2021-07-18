@@ -37,10 +37,18 @@ const flipCards = () => {
 
 const flipCard = (card) => card.flip();
 
+const battle = (ca, cb) => {
+  if (ca.value > cb.value) {
+    return "A won!";
+  }
+  return "B won!";
+};
+
 export default {
   loadCards,
   getCards,
   dealCards,
   flipCards,
   flipCard,
+  battle,
 };

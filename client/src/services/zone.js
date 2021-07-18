@@ -1,12 +1,18 @@
 export default class Zone {
-  constructor(scene) {
+  constructor(scene, position) {
     this.scene = scene;
+    this.position = position;
   }
 
   renderDropZone() {
     const zone = this.scene.add
-      .zone(500, 275, 200, 250)
-      .setRectangleDropZone(200, 250);
+      .zone(
+        this.position[0],
+        this.position[1],
+        this.position[2],
+        this.position[3]
+      ) //500, 275, 200, 250
+      .setRectangleDropZone(this.position[2], this.position[3]);
     zone.setData({ card: null });
 
     return zone;

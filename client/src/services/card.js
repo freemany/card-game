@@ -19,6 +19,7 @@ export default class Card {
       .setScale(0.5, 0.5)
       .setInteractive();
     this.gameObject.index = this.index;
+    this.gameObject.depth = this.index;
 
     this.scene.input.setDraggable(this.gameObject);
 
@@ -64,5 +65,9 @@ export default class Card {
     });
 
     timeline.play();
+  }
+
+  destroy() {
+    this.gameObject.destroy();
   }
 }
