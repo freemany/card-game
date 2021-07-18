@@ -35,9 +35,12 @@ const flipCards = () => {
   });
 };
 
+const flipCard = (card) => card.flip();
+
 export default {
   loadCards,
   getCards,
   dealCards,
   flipCards,
+  flipCard,
 };

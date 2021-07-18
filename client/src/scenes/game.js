@@ -39,7 +39,9 @@ export default class Game extends Phaser.Scene {
       .setColor(dealText.default)
       .setInteractive();
     this.reviewText.on("pointerdown", () => {
-      cardsService.flipCards();
+      // cardsService.flipCards();
+      const card = this.dropZone.data.values.card;
+      cardsService.flipCard(this.dropZone.data.values.card);
     });
     this.reviewText.on("pointerover", () => {
       this.reviewText.setColor(dealText.pointerover);
@@ -71,7 +73,7 @@ export default class Game extends Phaser.Scene {
     });
 
     this.input.on("drop", (pointer, gameObject, dropZone) => {
-      dropZone.data.values.card = gameObject;
+      dropZone.data.values.card = cardsService.getCards()[gameObject.index];
     });
   }
 }

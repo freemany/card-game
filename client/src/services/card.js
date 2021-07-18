@@ -18,6 +18,7 @@ export default class Card {
       .sprite(250, 200 + this.index * 20, this.frontCard)
       .setScale(0.5, 0.5)
       .setInteractive();
+    this.gameObject.index = this.index;
 
     this.scene.input.setDraggable(this.gameObject);
 
