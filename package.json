@@ -1,0 +1,8 @@
+{
+  "name": "card-game",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "npm --prefix client run start"
+  }
+}
