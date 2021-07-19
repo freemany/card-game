@@ -1,8 +1,10 @@
 import Phaser from "phaser";
-import io from "socket.io-client";
+// import io from "socket.io-client";
 import { dealText } from "../constants/colors";
 import cardsService from "../services/cardsService";
 import Zone from "../services/zone";
+import socketService from "./../services/socketService";
+import TestButton from "../components/testButton";
 
 export default class Game extends Phaser.Scene {
   constructor() {
@@ -48,10 +50,12 @@ export default class Game extends Phaser.Scene {
   }
 
   _connectSocket() {
-    this.socket = io("http://localhost:3000", { transports: ["websocket"] });
-    this.socket.on("connect", () => {
+    this.socket = socketService.getSocket();
+    socketService.onConnect(() => {
       console.log("connected");
     });
+
+    new TestButton(this.socket);
   }
 
   create() {

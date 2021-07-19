@@ -5,6 +5,11 @@ const io = require("socket.io")(http);
 io.on("connection", (client) => {
   console.log("user connected: " + client.id);
 
+  client.on("room", (room) => {
+    console.log("my room: " + room);
+    client.emit("roomJoined", "You have joined Room " + room);
+  });
+
   client.on("disconnect", () => {
     console.log("user disconnected: " + client.id);
   });

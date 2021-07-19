@@ -1,9 +1,10 @@
 import Phaser from "phaser";
 import Game from "./scenes/game";
+import $ from "jquery";
 
 const config = {
   type: Phaser.AUTO,
-  parent: "phaser-example",
+  parent: "game-canvas",
   width: 800,
   height: 600,
   scene: [Game],
