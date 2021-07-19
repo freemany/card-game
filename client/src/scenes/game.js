@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import io from "socket.io-client";
 import { dealText } from "../constants/colors";
 import cardsService from "../services/cardsService";
 import Zone from "../services/zone";
@@ -46,7 +47,15 @@ export default class Game extends Phaser.Scene {
     });
   }
 
+  _connectSocket() {
+    this.socket = io("http://localhost:3000", { transports: ["websocket"] });
+    this.socket.on("connect", () => {
+      console.log("connected");
+    });
+  }
+
   create() {
+    this._connectSocket();
     this._addNextButton();
     this._createDropZoneA();
     this._createDropZoneB();
@@ -117,6 +126,9 @@ export default class Game extends Phaser.Scene {
         return;
       }
       dropZone.data.values.card = cardsService.getCards()[gameObject.index];
+      gameObject.x = dropZone.x;
+      gameObject.y = dropZone.y;
+      gameObject.disableInteractive();
     });
   }
 }

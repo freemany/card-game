@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "npm --prefix client run start"
+    "start:server": "nodemon server.js",
+    "start:client": "npm --prefix client run start"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.12",
+    "socket.io": "^4.1.3"
   }
 }
