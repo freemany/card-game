@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "start:server": "nodemon server.js",
-    "start:client": "npm --prefix client run start"
+    "start:client": "npm --prefix client run start",
+    "start": "nodemon server.js & npm --prefix client run start"
   },
   "dependencies": {
     "express": "^4.17.1",
