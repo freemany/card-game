@@ -39,9 +39,9 @@ const flipCard = (card) => card.flip();
 
 const battle = (ca, cb) => {
   if (ca.value > cb.value) {
-    return "A won!";
+    return "A";
   }
-  return "B won!";
+  return "B";
 };
 
 export default {

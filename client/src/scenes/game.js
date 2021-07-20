@@ -5,10 +5,16 @@ import cardsService from "../services/cardsService";
 import Zone from "../services/zone";
 import socketService from "./../services/socketService";
 import TestButton from "../components/testButton";
+import { timers } from "jquery";
 
 export default class Game extends Phaser.Scene {
   constructor() {
     super({ key: "Game" });
+    this.start = false;
+    this.dealReady = true;
+    this.battleReady = false;
+    this.clearReady = false;
+    this.scores = { playA: 0, playB: 0 };
   }
 
   preload() {
@@ -34,12 +40,15 @@ export default class Game extends Phaser.Scene {
       .setColor(dealText.default)
       .setInteractive();
     this.nextButton.on("pointerdown", () => {
+      if (!this.clearReady) return;
       const cardA = this.dropZoneA.data.values.card;
       const cardB = this.dropZoneB.data.values.card;
       cardA.destroy();
       cardB.destroy();
       this.dropZoneA.data.values.card = null;
       this.dropZoneB.data.values.card = null;
+      this.battleReady = false;
+      this.clearReady = false;
     });
     this.nextButton.on("pointerover", () => {
       this.nextButton.setColor(dealText.pointerover);
@@ -58,9 +67,29 @@ export default class Game extends Phaser.Scene {
     new TestButton(this.socket);
   }
 
+  _addPlayersText() {
+    this.playALabel = this.add
+      .text(100, 450, ["PLAYER A"])
+      .setFontSize(38)
+      .setColor(dealText.default);
+    this.playAScore = this.add
+      .text(350, 450, [this.scores.playA])
+      .setFontSize(38)
+      .setColor(dealText.default);
+    this.playBLabel = this.add
+      .text(100, 50, ["PLAYER B"])
+      .setFontSize(38)
+      .setColor(dealText.pointerover);
+    this.playBScore = this.add
+      .text(350, 50, [this.scores.playB])
+      .setFontSize(38)
+      .setColor(dealText.pointerover);
+  }
+
   create() {
     this._connectSocket();
     this._addNextButton();
+    this._addPlayersText();
     this._createDropZoneA();
     this._createDropZoneB();
 
@@ -71,6 +100,7 @@ export default class Game extends Phaser.Scene {
       .setInteractive();
     this.dealText.on("pointerdown", () => {
       cardsService.dealCards();
+      this.dealReady = false;
     });
     this.dealText.on("pointerover", () => {
       this.dealText.setColor(dealText.pointerover);
@@ -85,14 +115,23 @@ export default class Game extends Phaser.Scene {
       .setColor(dealText.default)
       .setInteractive();
     this.battleButton.on("pointerdown", () => {
-      // cardsService.flipCards();
+      if (!this.battleReady) return;
+      this.clearReady = true;
+
       const cardA = this.dropZoneA.data.values.card;
       const cardB = this.dropZoneB.data.values.card;
-      console.log(cardA, cardB);
+
       cardsService.flipCard(cardA);
       cardsService.flipCard(cardB);
+      this.battleReady = false;
 
-      console.log(cardsService.battle(cardA, cardB));
+      const result = cardsService.battle(cardA, cardB);
+
+      if (result === "A") {
+        this.playAScore.text = Number(this.playAScore.text) + 1;
+      } else {
+        this.playBScore.text = Number(this.playBScore.text) + 1;
+      }
     });
     this.battleButton.on("pointerover", () => {
       this.battleButton.setColor(dealText.pointerover);
@@ -133,6 +172,27 @@ export default class Game extends Phaser.Scene {
       gameObject.x = dropZone.x;
       gameObject.y = dropZone.y;
       gameObject.disableInteractive();
+      if (this.dropZoneA.data.values.card && this.dropZoneB.data.values.card) {
+        this.battleReady = true;
+      }
     });
+  }
+
+  update() {
+    if (this.battleReady) {
+      this.battleButton.setColor(dealText.default);
+    } else {
+      this.battleButton.setColor(dealText.pointerover);
+    }
+    if (this.clearReady) {
+      this.nextButton.setColor(dealText.default);
+    } else {
+      this.nextButton.setColor(dealText.pointerover);
+    }
+    if (this.dealReady) {
+      this.dealText.setColor(dealText.default);
+    } else {
+      this.dealText.setColor(dealText.pointerover);
+    }
   }
 }
