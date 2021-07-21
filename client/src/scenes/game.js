@@ -5,7 +5,6 @@ import cardsService from "../services/cardsService";
 import Zone from "../services/zone";
 import socketService from "./../services/socketService";
 import TestButton from "../components/testButton";
-import { timers } from "jquery";
 
 export default class Game extends Phaser.Scene {
   constructor() {
@@ -15,6 +14,33 @@ export default class Game extends Phaser.Scene {
     this.battleReady = false;
     this.clearReady = false;
     this.scores = { playA: 0, playB: 0 };
+    this.side = "B";
+    this.setup = {
+      A: {
+        A: {
+          label: [100, 450],
+          score: [350, 450],
+          dropZone: [400, 275, 200, 250],
+        },
+        B: {
+          label: [100, 50],
+          score: [350, 50],
+          dropZone: [650, 275, 200, 250],
+        },
+      },
+      B: {
+        B: {
+          label: [100, 450],
+          score: [350, 450],
+          dropZone: [400, 275, 200, 250],
+        },
+        A: {
+          label: [100, 50],
+          score: [350, 50],
+          dropZone: [650, 275, 200, 250],
+        },
+      },
+    };
   }
 
   preload() {
@@ -23,12 +49,12 @@ export default class Game extends Phaser.Scene {
   }
 
   _createDropZoneA() {
-    this.zoneA = new Zone(this, [400, 275, 200, 250]);
+    this.zoneA = new Zone(this, this.setup[this.side].A.dropZone);
     this.dropZoneA = this.zoneA.renderDropZone();
     this.outlineA = this.zoneA.renderOutline(this.dropZoneA);
   }
   _createDropZoneB() {
-    this.zoneB = new Zone(this, [650, 275, 200, 250]);
+    this.zoneB = new Zone(this, this.setup[this.side].B.dropZone);
     this.dropZoneB = this.zoneB.renderDropZone();
     this.outlineB = this.zoneB.renderOutline(this.dropZoneB);
   }
@@ -69,19 +95,35 @@ export default class Game extends Phaser.Scene {
 
   _addPlayersText() {
     this.playALabel = this.add
-      .text(100, 450, ["PLAYER A"])
+      .text(
+        this.setup[this.side].A.label[0],
+        this.setup[this.side].A.label[1],
+        ["PLAYER A"]
+      )
       .setFontSize(38)
       .setColor(dealText.default);
     this.playAScore = this.add
-      .text(350, 450, [this.scores.playA])
+      .text(
+        this.setup[this.side].A.score[0],
+        this.setup[this.side].A.score[1],
+        [this.scores.playA]
+      )
       .setFontSize(38)
       .setColor(dealText.default);
     this.playBLabel = this.add
-      .text(100, 50, ["PLAYER B"])
+      .text(
+        this.setup[this.side].B.label[0],
+        this.setup[this.side].B.label[1],
+        ["PLAYER B"]
+      )
       .setFontSize(38)
       .setColor(dealText.pointerover);
     this.playBScore = this.add
-      .text(350, 50, [this.scores.playB])
+      .text(
+        this.setup[this.side].B.score[0],
+        this.setup[this.side].B.score[1],
+        [this.scores.playB]
+      )
       .setFontSize(38)
       .setColor(dealText.pointerover);
   }
