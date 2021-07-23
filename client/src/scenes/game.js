@@ -10,11 +10,12 @@ export default class Game extends Phaser.Scene {
   constructor() {
     super({ key: "Game" });
     this.start = false;
+    this.isCreated = false;
     this.dealReady = true;
     this.battleReady = false;
     this.clearReady = false;
     this.scores = { playA: 0, playB: 0 };
-    this.side = "B";
+    this.side = null;
     this.setup = {
       A: {
         A: {
@@ -48,15 +49,17 @@ export default class Game extends Phaser.Scene {
     cardsService.loadCards(this, "cardFront");
   }
 
-  _createDropZoneA() {
+  _createDropZoneA(isShown = true) {
     this.zoneA = new Zone(this, this.setup[this.side].A.dropZone);
     this.dropZoneA = this.zoneA.renderDropZone();
     this.outlineA = this.zoneA.renderOutline(this.dropZoneA);
+    if (!isShown) this.dropZoneA.visible = false;
   }
-  _createDropZoneB() {
+  _createDropZoneB(isShown = true) {
     this.zoneB = new Zone(this, this.setup[this.side].B.dropZone);
     this.dropZoneB = this.zoneB.renderDropZone();
     this.outlineB = this.zoneB.renderOutline(this.dropZoneB);
+    if (!isShown) this.dropZoneB.visible = false;
   }
 
   _addNextButton() {
@@ -90,6 +93,35 @@ export default class Game extends Phaser.Scene {
       console.log("connected");
     });
 
+    this.socket.on("setSide", (side) => {
+      console.log(side);
+      if (!side) return;
+      this.side = side;
+      this.isCreated = true;
+      this._create();
+    });
+
+    this.socket.on("otherDropCard", (data) => {
+      console.log(
+        cardsService.getCards()[data.cardIndex],
+        cardsService.getCards()
+      );
+      switch (data.side) {
+        case "A":
+          cardsService.getCards()[data.cardIndex].gameObject.x =
+            this.dropZoneA.x;
+          cardsService.getCards()[data.cardIndex].gameObject.y =
+            this.dropZoneA.y;
+          break;
+        case "B":
+          cardsService.getCards()[data.cardIndex].gameObject.x =
+            this.dropZoneB.x;
+          cardsService.getCards()[data.cardIndex].gameObject.y =
+            this.dropZoneB.y;
+        default:
+          break;
+      }
+    });
     new TestButton(this.socket);
   }
 
@@ -130,10 +162,14 @@ export default class Game extends Phaser.Scene {
 
   create() {
     this._connectSocket();
+  }
+
+  _create() {
+    this._connectSocket();
     this._addNextButton();
     this._addPlayersText();
-    this._createDropZoneA();
-    this._createDropZoneB();
+    this._createDropZoneA(this.side === "A");
+    this._createDropZoneB(this.side === "B");
 
     this.dealText = this.add
       .text(75, 350, ["DEAL CARDS"])
@@ -211,9 +247,16 @@ export default class Game extends Phaser.Scene {
         return;
       }
       dropZone.data.values.card = cardsService.getCards()[gameObject.index];
+      console.log(gameObject);
       gameObject.x = dropZone.x;
       gameObject.y = dropZone.y;
       gameObject.disableInteractive();
+
+      this.socket.emit("dropCard", {
+        cardIndex: gameObject.index,
+        side: this.side,
+      });
+
       if (this.dropZoneA.data.values.card && this.dropZoneB.data.values.card) {
         this.battleReady = true;
       }
@@ -221,6 +264,10 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
+    if (!this.isCreated) {
+      return;
+    }
+
     if (this.battleReady) {
       this.battleButton.setColor(dealText.default);
     } else {
