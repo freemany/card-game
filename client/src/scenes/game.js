@@ -68,6 +68,9 @@ export default class Game extends Phaser.Scene {
       .setFontSize(18)
       .setColor(dealText.default)
       .setInteractive();
+    if (this.side === "B") {
+      this.nextButton.visible = false;
+    }
     this.nextButton.on("pointerdown", () => {
       if (!this.clearReady) return;
       const cardA = this.dropZoneA.data.values.card;
@@ -78,12 +81,56 @@ export default class Game extends Phaser.Scene {
       this.dropZoneB.data.values.card = null;
       this.battleReady = false;
       this.clearReady = false;
+      if (this.side === "A") {
+        this.socket.emit("clear", { action: "clear", side: "B" });
+      }
     });
     this.nextButton.on("pointerover", () => {
       this.nextButton.setColor(dealText.pointerover);
     });
     this.nextButton.on("pointerout", () => {
       this.nextButton.setColor(dealText.default);
+    });
+  }
+
+  _onDealedCards() {
+    this.socket.on("dealedCards", (data) => {
+      if (data.action.side === this.side) {
+        this.cardConfig = data.action.data;
+        this.dealText.emit("pointerdown");
+      }
+    });
+  }
+
+  _updateScores(scores) {
+    this.scores = scores;
+    this.playAScore.text = scores.A;
+    this.playBScore.text = scores.B;
+  }
+
+  _onUpdateScores() {
+    this.socket.on("scores", (data) => {
+      if (data.side === this.side) {
+        this._updateScores(data.data);
+      }
+    });
+  }
+  _onBattle() {
+    console.log("on battle");
+    this.socket.on("battle", (data) => {
+      console.log("battle b");
+      if (data.side === this.side) {
+        this.battleReady = true;
+
+        this.battleButton.emit("pointerdown");
+      }
+    });
+  }
+  _onClear() {
+    this.socket.on("clear", (data) => {
+      if (this.side === data.side) {
+        this.nextButton.emit("pointerdown");
+      }
     });
   }
 
@@ -102,26 +149,28 @@ export default class Game extends Phaser.Scene {
     });
 
     this.socket.on("otherDropCard", (data) => {
-      console.log(
-        cardsService.getCards()[data.cardIndex],
-        cardsService.getCards()
-      );
+      const droppedCard = cardsService.getCards()[data.cardIndex];
+
       switch (data.side) {
         case "A":
-          cardsService.getCards()[data.cardIndex].gameObject.x =
-            this.dropZoneA.x;
-          cardsService.getCards()[data.cardIndex].gameObject.y =
-            this.dropZoneA.y;
+          droppedCard.gameObject.x = this.dropZoneA.x;
+          droppedCard.gameObject.y = this.dropZoneA.y;
+          this.dropZoneA.data.values.card = droppedCard;
           break;
         case "B":
-          cardsService.getCards()[data.cardIndex].gameObject.x =
-            this.dropZoneB.x;
-          cardsService.getCards()[data.cardIndex].gameObject.y =
-            this.dropZoneB.y;
+          droppedCard.gameObject.x = this.dropZoneB.x;
+          droppedCard.gameObject.y = this.dropZoneB.y;
+          this.dropZoneB.data.values.card = droppedCard;
         default:
           break;
       }
     });
+
+    this._onDealedCards();
+    this._onUpdateScores();
+    this._onBattle();
+    this._onClear();
+
     new TestButton(this.socket);
   }
 
@@ -161,11 +210,19 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
+    console.log("creating ....");
     this._connectSocket();
   }
 
+  _emitScores(scores) {
+    this.socket.emit("scores", scores);
+  }
+  _emitBattle() {
+    this.socket.emit("battle", { action: "battle", side: "B" });
+  }
+
   _create() {
-    this._connectSocket();
+    // this._connectSocket();
     this._addNextButton();
     this._addPlayersText();
     this._createDropZoneA(this.side === "A");
@@ -176,9 +233,26 @@ export default class Game extends Phaser.Scene {
       .setFontSize(18)
       .setColor(dealText.default)
       .setInteractive();
+    if (this.side === "B") {
+      this.dealText.visible = false;
+    }
     this.dealText.on("pointerdown", () => {
-      cardsService.dealCards();
+      if (this.side === "A") {
+        cardsService.dealCards();
+      } else {
+        cardsService.dealCards(this.cardConfig);
+      }
+
       this.dealReady = false;
+      if (this.side === "A") {
+        this.socket.emit("dealedCards", {
+          action: {
+            name: "dealCards",
+            side: "B",
+            data: cardsService.getCardsConfig(),
+          },
+        });
+      }
     });
     this.dealText.on("pointerover", () => {
       this.dealText.setColor(dealText.pointerover);
@@ -192,6 +266,9 @@ export default class Game extends Phaser.Scene {
       .setFontSize(18)
       .setColor(dealText.default)
       .setInteractive();
+    if (this.side === "B") {
+      this.battleButton.visible = false;
+    }
     this.battleButton.on("pointerdown", () => {
       if (!this.battleReady) return;
       this.clearReady = true;
@@ -210,6 +287,12 @@ export default class Game extends Phaser.Scene {
       } else {
         this.playBScore.text = Number(this.playBScore.text) + 1;
       }
+      this.scores = { A: this.playAScore.text, B: this.playBScore.text };
+
+      if (this.side === "A") {
+        this._emitBattle();
+      }
+      // this._emitScores(this.scores);
     });
     this.battleButton.on("pointerover", () => {
       this.battleButton.setColor(dealText.pointerover);
@@ -247,7 +330,6 @@ export default class Game extends Phaser.Scene {
         return;
       }
       dropZone.data.values.card = cardsService.getCards()[gameObject.index];
-      console.log(gameObject);
       gameObject.x = dropZone.x;
       gameObject.y = dropZone.y;
       gameObject.disableInteractive();
@@ -266,6 +348,11 @@ export default class Game extends Phaser.Scene {
   update() {
     if (!this.isCreated) {
       return;
+    }
+
+    //testing
+    if (this.dropZoneA.data.values.card && this.dropZoneB.data.values.card) {
+      this.battleReady = true;
     }
 
     if (this.battleReady) {

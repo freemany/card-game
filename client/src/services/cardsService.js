@@ -1,7 +1,8 @@
 import { cards as cardsConfig } from "./../config";
 import Card from "./card";
 
-const cards = [];
+let cards = [];
+let shuffledCardsConfig;
 
 function shuffle(d) {
   for (let c = d.length - 1; c > 0; c--) {
@@ -14,7 +15,7 @@ function shuffle(d) {
 }
 
 const loadCards = (scene, cardFrontName) => {
-  shuffle(cardsConfig).forEach((ccf, index) => {
+  cardsConfig.forEach((ccf, index) => {
     const card = new Card(scene, ccf.value, index, cardFrontName);
     card.load();
     cards.push(card);
@@ -23,7 +24,14 @@ const loadCards = (scene, cardFrontName) => {
 
 const getCards = () => cards;
 
-const dealCards = () => {
+const dealCards = (config) => {
+  shuffledCardsConfig = config || shuffle(cardsConfig);
+  const cache = [];
+  shuffledCardsConfig.forEach((c, i) => {
+    cards[c.value - 1].setIndex(i);
+    cache.push(cards[c.value - 1]);
+  });
+  cards = cache;
   cards.forEach((card) => {
     card.add();
   });
@@ -44,6 +52,8 @@ const battle = (ca, cb) => {
   return "B";
 };
 
+const getCardsConfig = () => shuffledCardsConfig;
+
 export default {
   loadCards,
   getCards,
@@ -51,4 +61,5 @@ export default {
   flipCards,
   flipCard,
   battle,
+  getCardsConfig,
 };

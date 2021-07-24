@@ -10,7 +10,7 @@ export default class TestButton {
   _setListeners() {
     $("#start-btn").on("click", () => {
       console.log("button click");
-      this.socket.emit("room", "test-button");
+      this.socket.emit("room", "test");
       $("#game-canvas").show();
     });
 

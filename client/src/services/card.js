@@ -6,6 +6,10 @@ export default class Card {
     this.frontCard = frontCardSprite;
   }
 
+  setIndex(i) {
+    this.index = i;
+  }
+
   load() {
     this.sprite = `card_${this.value}`;
     this.scene.load.image(this.sprite, `src/assets/cards/${this.value}.png`);
